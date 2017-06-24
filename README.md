@@ -1,8 +1,9 @@
-# C Parser
-A parser for a subset of ANSI C.
-Generates symbol table and IC
+# CNOSSU
 
-* Install requirements  
-  ```sudo apt-get install bison flex```
-* Specify input file to run in ```run.sh```
-* Run `bash run.sh`
+Trabalho da disciplina de Construção de Compiladores
+
+Renan Cunha
+Rodrigo Maciel
+Leonardo Loch
+
+UFSC - Campus Araranguá
