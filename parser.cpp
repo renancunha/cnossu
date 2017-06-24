@@ -1,0 +1,169 @@
+#include "parser.hh"
+
+void Parser::seta_tipo ()
+{
+	tipo_atual = yytext;
+}
+
+void Parser::declara_var () 
+{
+	std::string id = yytext;
+
+	std::map<std::string, symrec>::iterator i = _tab_sim.find(id);
+
+	// Variavel ja foi declarada
+	if(i != _tab_sim.end()) {
+		std::string erro = "Variavel ja declarada: " + id;
+		yyerror(erro.c_str());
+		return;
+	}
+
+	// Add o novo simbolo
+	symrec sym;
+	sym.id = id;
+	sym.tipo = tipo_atual;
+
+	_tab_sim[id] = sym;
+
+}
+
+void Parser::existe_var()
+{
+	std::string id = yytext;
+	std::map<std::string, symrec>::iterator i = _tab_sim.find(id);
+	if(i == _tab_sim.end()) {
+		std::string erro = "Variavel nao foi declarada: " + id;
+		yyerror(erro.c_str());
+		return;
+	}
+}
+
+void Parser::stack_push()
+{
+	_stack.push(yytext);
+}
+
+void Parser::code_atribuicao()
+{
+	std::string arg2 = _stack.top(); _stack.pop();
+	_stack.pop();
+	std::string arg1 = _stack.top(); _stack.pop();
+	std::string str = arg1 + "\t=\t" + arg2;
+
+	quadrupla quad;
+	quad.op = "=";
+	quad.arg1 = arg2;
+	quad.resultado = arg1;
+	_cod_int.push_back(quad);
+
+	//std::cout << str << "\n";
+}
+
+void Parser::code_algebrica()
+{
+	std::string tmp = "t" + std::to_string(_g_idx);
+	std::string arg2 = _stack.top(); _stack.pop();
+	std::string sinal = _stack.top(); _stack.pop();
+	std::string arg1 = _stack.top(); _stack.pop();
+	//std::string str = tmp + "\t=\t" + arg1 + "\t" + sinal + "\t" + arg2;
+	_stack.push(tmp);
+
+	//std::cout << str << "\n";
+
+	quadrupla quad;
+	quad.op = sinal;
+	quad.arg1 = arg1;
+	quad.arg2 = arg2;
+	quad.resultado = tmp;
+	_cod_int.push_back(quad);
+
+	_g_idx++;
+}
+
+void Parser::code_logica()
+{
+	std::string tmp = "t" + std::to_string(_g_idx);
+	std::string arg2 = _stack.top(); _stack.pop();
+	std::string sinal = _stack.top(); _stack.pop();
+	std::string arg1 = _stack.top(); _stack.pop();
+	//std::string str = tmp + "\t=\t" + arg1 + "\t" + sinal + "\t" + arg2;
+	_stack.push(tmp);
+
+	//std::cout << str << "\n";
+
+	quadrupla quad;
+	quad.op = sinal;
+	quad.arg1 = arg1;
+	quad.arg2 = arg2;
+	quad.resultado = tmp;
+	_cod_int.push_back(quad);
+
+	_g_idx++;
+}
+
+void Parser::code_if()
+{
+	// Adiciona o IF na lista de quadruplas
+	std::string exp = _stack.top();
+	quadrupla quad_if;
+	quad_if.op = "IF";
+	quad_if.arg1 = exp;
+	std::string label = "L" + std::to_string(_g_label_idx);
+	_g_label_idx++;
+	quad_if.resultado = "GOTO " + label;
+	_cod_int.push_back(quad_if);
+
+	// Adiciona um GOTO caso a condicao nao foi satisfeita
+	// Aqui precisamos tratar o label usando backpatching
+	quadrupla quad_goto;
+	quad_goto.op = "GOTO";
+	quad_goto.arg1 = "XX";
+	_cod_int.push_back(quad_goto);	
+	// Adiciona o indice atual da lista _cod_int para ser corrigida no backpatching
+	_stack_backpatching.push(_cod_int.size() - 1);
+
+
+	// Adiciona o label de quando a condicao foi satisfeita
+	quadrupla quad_label;
+	quad_label.op = "LABEL";
+	quad_label.arg1 = label;
+	_cod_int.push_back(quad_label);
+
+}
+
+void Parser::code_if_else()
+{
+	// Gera um label que sera corrigido via backpatching
+	std::string label = "L" + std::to_string(_g_label_idx);
+	_g_label_idx++;
+	quadrupla quad_label;
+	quad_label.op = "LABEL";
+	quad_label.arg1 = label;
+	_cod_int.push_back(quad_label);
+
+	// Agora que geramos a label, vamos pegar o GOTO que precisa ser corrigido via backpatching
+	int pos_retrocorrigir = _stack_backpatching.top();
+	_stack_backpatching.pop();
+
+	std::list<quadrupla>::iterator it = std::next(_cod_int.begin(), pos_retrocorrigir);
+	(*it).arg1 = label;
+}
+
+void Parser::code_if_fim()
+{
+	code_if_else();
+}
+
+void Parser::print_int_code()
+{
+	std::list<quadrupla>::iterator it;
+	int i = 0;
+	std::cout << "\n\nN\tOp\tArg1\tArg2\tResultado\n";
+    for(it = _cod_int.begin(); it != _cod_int.end(); it++) {
+    	std::cout << "(" + std::to_string(i) + ")\t" + (*it).op + "\t" + (*it).arg1 + "\t" + (*it).arg2 + "\t" + (*it).resultado + "\n";
+    	i++;
+    }
+    std::cout << "\n";
+
+}
+
