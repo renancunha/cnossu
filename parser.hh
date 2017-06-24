@@ -39,13 +39,16 @@ public:
 	void code_if();
 	void code_if_else();
 	void code_if_fim();
+	void code_while_start();
+	void code_while();
+	void code_while_fim();
 
 	void print_int_code();
 
 private:
 	std::map<std::string, symrec> _tab_sim;
 	std::stack<std::string> _stack;
-
+	std::stack<int> _stack_while_retorno;
 	std::stack<int> _stack_backpatching;
 	
 

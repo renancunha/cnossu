@@ -40,6 +40,7 @@ CORPOS          : CORPO  CORPOS
 CORPO           : ST_DECLARACAO    
                 | ST_ATRIBUICAO  
                 | ST_IF
+                | ST_WHILE
                 | ';'
                 ;           
 
@@ -62,6 +63,13 @@ ST_IF           : IF '(' EXP { parser.code_if(); } ')'  ESCOPO ST_ELSE
 
 ST_ELSE         : ELSE { parser.code_if_else(); } ESCOPO 
                 | { parser.code_if_fim(); }
+                ;
+
+ST_WHILE        : { parser.code_while_start(); } WHILE '(' EXP { parser.code_while(); } ')' CORPO_WHILE 
+                ;
+
+CORPO_WHILE     : ESCOPO { parser.code_while_fim(); }
+                | CORPO { parser.code_while_fim(); }
                 ;
 
 ST_DECLARACAO   : TIPO { parser.seta_tipo(); } ID { parser.declara_var(); }  IDS 

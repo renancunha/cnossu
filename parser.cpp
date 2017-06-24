@@ -154,6 +154,82 @@ void Parser::code_if_fim()
 	code_if_else();
 }
 
+void Parser::code_while_start()
+{
+	// Gera uma label para o inicio do código
+	std::string label_inicio = "L" + std::to_string(_g_label_idx);
+	_g_label_idx++;
+	quadrupla quad_label;
+	quad_label.op = "LABEL";
+	quad_label.arg1 = label_inicio;
+	_cod_int.push_back(quad_label);
+
+	// Adiciona o endereco dessa quadrupla na pilha para o loop do while
+	// A ultima coisa dentro do corpo do while é um GOTO para este label, logo,
+	// precisamos guardar este label em algum local...
+	_stack_while_retorno.push(_cod_int.size() - 1);
+}
+
+void Parser::code_while()
+{
+	// Adiciona o IF na lista de quadruplas
+	std::string exp = _stack.top();
+	quadrupla quad_if;
+	quad_if.op = "IF";
+	quad_if.arg1 = exp;
+	std::string label = "L" + std::to_string(_g_label_idx);
+	_g_label_idx++;
+	quad_if.resultado = "GOTO " + label;
+	_cod_int.push_back(quad_if);
+
+	// Adiciona um GOTO caso a condicao nao foi satisfeita
+	// Aqui precisamos tratar o label usando backpatching
+	quadrupla quad_goto;
+	quad_goto.op = "GOTO";
+	quad_goto.arg1 = "XX";
+	_cod_int.push_back(quad_goto);	
+	// Adiciona o indice atual da lista _cod_int para ser corrigida no backpatching
+	_stack_backpatching.push(_cod_int.size() - 1);
+
+
+	// Adiciona o label de quando a condicao foi satisfeita
+	quadrupla quad_label;
+	quad_label.op = "LABEL";
+	quad_label.arg1 = label;
+	_cod_int.push_back(quad_label);
+}
+
+void Parser::code_while_fim()
+{
+	// Precisa adicionar um GOTO para o inicio do while
+	// Pega o LABEL para o inicio do while atual
+	int pos_while_retorno = _stack_while_retorno.top();
+	std::cout << std::to_string(pos_while_retorno) << "\n";
+	_stack_while_retorno.pop();
+
+	// Procura o local que esta este LABEL
+	std::list<quadrupla>::iterator it_while_retorno = std::next(_cod_int.begin(), pos_while_retorno);
+	quadrupla quad_goto;
+	quad_goto.op = "GOTO";
+	quad_goto.arg1 = (*it_while_retorno).arg1;
+	_cod_int.push_back(quad_goto);	
+
+	// Gera um label que sera corrigido via backpatching
+	std::string label = "L" + std::to_string(_g_label_idx);
+	_g_label_idx++;
+	quadrupla quad_label;
+	quad_label.op = "LABEL";
+	quad_label.arg1 = label;
+	_cod_int.push_back(quad_label);
+
+	// Agora que geramos a label, vamos pegar o GOTO que precisa ser corrigido via backpatching
+	int pos_retrocorrigir = _stack_backpatching.top();
+	_stack_backpatching.pop();
+
+	std::list<quadrupla>::iterator it_backpatching = std::next(_cod_int.begin(), pos_retrocorrigir);
+	(*it_backpatching).arg1 = label;
+}
+
 void Parser::print_int_code()
 {
 	std::list<quadrupla>::iterator it;

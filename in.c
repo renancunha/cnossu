@@ -2,12 +2,16 @@ void main()
 {
     int a;
     a = 5;
-    if(a == 10)
+    while(a == 4)
     {
-    	int k;
-    	k = 5;
+    	int j;
+    	j = 0;
+    	if(j == 0)
+    	{
+    		int ka;
+    		ka = 56;
+    	}
     }
-
-    int b;
-    b = 1;
+    int c;
+    c = 10;
 }
