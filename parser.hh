@@ -31,6 +31,7 @@ public:
 	void seta_tipo();
 	void declara_var();
 	void existe_var();
+	void verifica_existe();
 
 	void stack_push();
 	void code_atribuicao();
@@ -39,9 +40,15 @@ public:
 	void code_if();
 	void code_if_else();
 	void code_if_fim();
-	void code_while_start();
+	void code_while_inicio();
 	void code_while();
 	void code_while_fim();
+	void code_switch_case();
+	void code_switch_label_case();
+	void code_switch_break();
+	void code_switch_default_break();
+	void code_switch_inicio();
+	void code_switch_fim();
 
 	void print_int_code();
 
@@ -49,6 +56,7 @@ private:
 	std::map<std::string, symrec> _tab_sim;
 	std::stack<std::string> _stack;
 	std::stack<int> _stack_while_retorno;
+	std::stack<int> _stack_switch_fim;
 	std::stack<int> _stack_backpatching;
 	
 
@@ -56,6 +64,7 @@ private:
 	std::list<quadrupla> _cod_int;
 	int _g_idx = 0;
 	int _g_label_idx = 0;
+	int _g_switch_idx = 0;
 
 };
 

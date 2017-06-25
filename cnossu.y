@@ -13,7 +13,7 @@ Parser parser;
 
 %token INT FLOAT VOID STRING_LITERAL
 %token IF ELSE
-%token WHILE SWITCH 
+%token WHILE SWITCH CASE BREAK DEFAULT
 %token NUM NUM_REAL ID
 %start F_MAIN
 
@@ -41,6 +41,7 @@ CORPO           : ST_DECLARACAO
                 | ST_ATRIBUICAO  
                 | ST_IF
                 | ST_WHILE
+                | ST_SWITCH
                 | ';'
                 ;           
 
@@ -65,11 +66,36 @@ ST_ELSE         : ELSE { parser.code_if_else(); } ESCOPO
                 | { parser.code_if_fim(); }
                 ;
 
-ST_WHILE        : { parser.code_while_start(); } WHILE '(' EXP { parser.code_while(); } ')' CORPO_WHILE 
+ST_WHILE        : { parser.code_while_inicio(); } WHILE '(' EXP { parser.code_while(); } ')' CORPO_WHILE 
                 ;
 
 CORPO_WHILE     : ESCOPO { parser.code_while_fim(); }
                 | CORPO { parser.code_while_fim(); }
+                ;
+
+ST_SWITCH       : { parser.code_switch_inicio(); } SWITCH '(' EXP ')' '{' CORPO_SWITCH '}' { parser.code_switch_fim(); }
+                ;
+
+CORPO_SWITCH    : CASES    
+                | CASES ST_DEFAULT
+                ;
+
+CASES           : { parser.code_switch_label_case(); } CASE NUM { parser.code_switch_case(); } ':' SWITCHEXP BREAKSTMT
+                | 
+                ;
+BREAKSTMT       : { parser.code_switch_break(); } BREAK ';' CASES
+                | CASES 
+                ;
+
+ST_DEFAULT      : { parser.code_switch_label_case(); } DEFAULT ':' SWITCHEXP DE  
+                ;
+
+DE              : BREAK ';'
+                |
+                ;
+
+SWITCHEXP       : ESCOPO
+                | CORPO
                 ;
 
 ST_DECLARACAO   : TIPO { parser.seta_tipo(); } ID { parser.declara_var(); }  IDS 
@@ -79,7 +105,7 @@ IDS             : ';'
                 | ','  ID  IDS 
                 ;
 
-ST_ATRIBUICAO   : ID { parser.stack_push(); }  ASGN  { parser.stack_push(); } EXP  { parser.code_atribuicao(); } ';' 
+ST_ATRIBUICAO   : ID { parser.verifica_existe(); parser.stack_push(); }  ASGN  { parser.stack_push(); } EXP  { parser.code_atribuicao(); } ';' 
                 ;
 
 TIPO            : INT

@@ -26,6 +26,9 @@ real                        [+-]?([0-9]*[.])?[0-9]+
 "else"                      {return ELSE;}
 "while"                     {return WHILE;}
 "switch"                    {return SWITCH;}
+"default" 					{return DEFAULT;}
+"case" 						{return CASE;}
+"break" 					{return BREAK;}
 {string}                    {return STRING_LITERAL;}
 {dig}+                      {return NUM;}
 {real}                      {return NUM_REAL;}
