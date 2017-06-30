@@ -9,21 +9,11 @@ Parser parser;
 
 %}
 
-%union semrec /* The Semantic Records */
-{
-    int intval; 
-    char *id; 
-    struct if_instr *if_instr;
-    struct while_instr *while_instr;
-}
-
 %define parse.error verbose
 
 %token INT FLOAT VOID STRING_LITERAL
-%token ELSE
-%token <if_instr> IF
-%token <while_instr> WHILE
-%token SWITCH CASE BREAK DEFAULT
+%token IF ELSE
+%token WHILE SWITCH CASE BREAK DEFAULT
 %token NUM NUM_REAL ID
 %start F_MAIN
 
@@ -55,7 +45,7 @@ CORPO           : ST_DECLARACAO
                 | ';'
                 ;           
 
-EXP             : EXP   EQ    { parser.stack_push(); } EXP { parser.code_logica(); }
+EXP             : EXP   EQ    { parser.stack_push(); } EXP { parser.code_logica(); }                
                 | EXP   NE    { parser.stack_push(); } EXP { parser.code_logica(); }
                 | EXP   LE    { parser.stack_push(); } EXP { parser.code_logica(); }
                 | EXP   GE    { parser.stack_push(); } EXP { parser.code_logica(); }
@@ -73,47 +63,19 @@ EXP             : EXP   EQ    { parser.stack_push(); } EXP { parser.code_logica(
                 | NUM_REAL    { parser.stack_push(); }
                 ;
 
-ST_IF           : IF '(' EXP 
-                    {
-                        $1 = parser.get_if_instr();
-                        $1->goto_false = parser.code_if();
-                    }
-                    ')'
-                    ESCOPO
-                    {
-                        $1->goto_end_true = parser.gen_goto();
-                    } 
-                  ELSE
-                    {
-                        int pos_label_false = parser.gen_label();
-                        parser.backpatch($1->goto_false, pos_label_false); 
-                    }
-                    ESCOPO
-                    {
-                        int pos_label_false = parser.gen_label();
-                        parser.backpatch($1->goto_end_true, pos_label_false);  
-                    }
+ST_IF           : IF '(' EXP { parser.code_if(); } ')'  ESCOPO ST_ELSE 
                 ;
 
-ST_WHILE        : WHILE 
-                    {
-                        $1 = parser.get_while_instr();
-                        $1->goto_start = parser.gen_label();
-                    }
-                    '(' EXP 
-                        {
-                            $1->goto_false = parser.code_while();
-                        }
-                     ')' 
-                     ESCOPO 
-                     {
-                        parser.gen_goto($1->goto_start);
-
-                        int pos_label_false = parser.gen_label();
-                        parser.backpatch($1->goto_false, pos_label_false); 
-                     }
+ST_ELSE         : ELSE { parser.code_if_else(); } ESCOPO 
+                | { parser.code_if_fim(); }
                 ;
 
+ST_WHILE        : { parser.code_while_inicio(); } WHILE '(' EXP { parser.code_while(); } ')' CORPO_WHILE 
+                ;
+
+CORPO_WHILE     : ESCOPO { parser.code_while_fim(); }
+                | CORPO { parser.code_while_fim(); }
+                ;
 
 ST_SWITCH       : { parser.code_switch_inicio(); } SWITCH '(' EXP ')' '{' CORPO_SWITCH '}' { parser.code_switch_fim(); }
                 ;

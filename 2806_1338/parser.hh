@@ -16,16 +16,6 @@ struct symrec {
 	std::string id;
 };
 
-struct if_instr {
-    int goto_false;
-    int goto_end_true;
-};
-
-struct while_instr {
-	int goto_start;
-	int goto_false;
-};
-
 struct quadrupla {
 	std::string op;
 	std::string arg1;
@@ -47,10 +37,12 @@ public:
 	void code_atribuicao();
 	void code_algebrica();
 	void code_logica();
-
-	int code_if();
-	int code_while();
-
+	void code_if();
+	void code_if_else();
+	void code_if_fim();
+	void code_while_inicio();
+	void code_while();
+	void code_while_fim();
 	void code_switch_case();
 	void code_switch_label_case();
 	void code_switch_break();
@@ -60,21 +52,20 @@ public:
 
 	void print_int_code();
 
-	if_instr* get_if_instr();
-	while_instr* get_while_instr();
-	int get_code_offset();
-	int gen_label();
-	int gen_goto();
-	int gen_goto(int cod_pos);
-	void backpatch(int pos_corrigir, int label);
-
 private:
 	std::map<std::string, symrec> _tab_sim;
+
 	std::stack<std::string> _stack;
+
+	std::stack<int> _stack_while_retorno;
+
 	std::stack<int> _stack_switch_fim;
+
 	std::stack<int> _stack_backpatching;
 	
+
 	std::string tipo_atual;
+
 	std::list<quadrupla> _cod_int;
 
 	int _g_idx = 0;
